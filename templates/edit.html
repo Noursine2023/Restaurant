@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Éditer — {{ resto.name }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 680px;">
+
+  <div style="margin-bottom: 1.5rem;">
+    <a href="/restaurant/{{ resto._id }}" style="color: var(--muted); text-decoration:none; font-size:0.875rem;">← Retour au détail</a>
+  </div>
+
+  <h1 class="page-title" style="margin-bottom:1.8rem;">Éditer le restaurant</h1>
+
+  <div class="card">
+    <form method="post">
+
+      <div class="form-group">
+        <label>Nom du restaurant *</label>
+        <input type="text" name="name" required value="{{ resto.name }}">
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Borough *</label>
+          <select name="borough" required>
+            {% for b in boroughs %}
+              <option value="{{ b }}" {% if resto.borough == b %}selected{% endif %}>{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Type de cuisine *</label>
+          <select name="cuisine" required>
+            {% for c in cuisines %}
+              <option value="{{ c }}" {% if resto.cuisine == c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin: 1.5rem 0 1rem;">Adresse</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Numéro de bâtiment</label>
+          <input type="text" name="building" value="{{ resto.address.get('building','') if resto.address else '' }}">
+        </div>
+        <div class="form-group">
+          <label>Code postal</label>
+          <input type="text" name="zipcode" value="{{ resto.address.get('zipcode','') if resto.address else '' }}">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Rue</label>
+        <input type="text" name="street" value="{{ resto.address.get('street','') if resto.address else '' }}">
+      </div>
+
+      <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+        <button type="submit" class="btn btn-primary">Sauvegarder</button>
+        <a href="/restaurant/{{ resto._id }}" class="btn btn-secondary">Annuler</a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — NYC Restaurants{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <span style="color: var(--muted); font-size:0.875rem;">Dataset : NYC Restaurants</span>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="label">Total restaurants</div>
+      <div class="value">{{ "{:,}".format(total) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Boroughs couverts</div>
+      <div class="value">{{ by_borough | length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Types de cuisine</div>
+      <div class="value">85</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Base de données</div>
+      <div class="value" style="font-size:1.3rem; padding-top:0.4rem;">MongoDB</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <div class="chart-title">Restaurants par borough</div>
+      <canvas id="boroughChart" height="220"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Top 8 cuisines</div>
+      <canvas id="cuisineChart" height="220"></canvas>
+    </div>
+
+    <div class="chart-card" style="grid-column: 1 / -1;">
+      <div class="chart-title">Score moyen d'inspection par borough (plus bas = meilleur)</div>
+      <canvas id="scoreChart" height="140"></canvas>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const ACCENT  = '#e8a045';
+const ACCENT2 = '#c45c3a';
+const MUTED   = '#8a8780';
+const TEXT    = '#f0ede6';
+const BORDER  = '#2e2c28';
+
+const palette = ['#e8a045','#c45c3a','#4caf7d','#5b8dd9','#9b6dd4','#e05252','#4ab9c4','#d4a847'];
+
+Chart.defaults.color = MUTED;
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 12;
+
+// Borough bar chart
+const boroughData = {{ by_borough | tojson }};
+new Chart(document.getElementById('boroughChart'), {
+  type: 'bar',
+  data: {
+    labels: boroughData.map(d => d._id),
+    datasets: [{
+      data: boroughData.map(d => d.total),
+      backgroundColor: palette,
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: BORDER }, ticks: { color: MUTED } },
+      y: { grid: { color: BORDER }, ticks: { color: MUTED } }
+    }
+  }
+});
+
+// Cuisine doughnut
+const cuisineData = {{ top_cuisines | tojson }};
+new Chart(document.getElementById('cuisineChart'), {
+  type: 'doughnut',
+  data: {
+    labels: cuisineData.map(d => d._id),
+    datasets: [{
+      data: cuisineData.map(d => d.total),
+      backgroundColor: palette,
+      borderColor: '#1a1916',
+      borderWidth: 3,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { color: TEXT, boxWidth: 14, padding: 12, font: { size: 11 } }
+      }
+    }
+  }
+});
+
+// Score horizontal bar
+const scoreData = {{ score_by_borough | tojson }};
+new Chart(document.getElementById('scoreChart'), {
+  type: 'bar',
+  data: {
+    labels: scoreData.map(d => d._id),
+    datasets: [{
+      data: scoreData.map(d => Math.round(d.avg_score * 10) / 10),
+      backgroundColor: scoreData.map(d =>
+        d.avg_score < 10 ? '#4caf7d' : d.avg_score < 15 ? '#e8a045' : '#e05252'
+      ),
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: BORDER }, ticks: { color: MUTED } },
+      y: { grid: { display: false }, ticks: { color: MUTED } }
+    }
+  }
+});
+</script>
+{% endblock %}

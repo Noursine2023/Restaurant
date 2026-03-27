@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ resto.name }} — NYC Restaurants{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div style="margin-bottom: 1.5rem;">
+    <a href="/restaurants" style="color: var(--muted); text-decoration:none; font-size:0.875rem;">← Retour à la liste</a>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">{{ resto.name }}</h1>
+      <div style="color:var(--muted); margin-top:0.3rem; font-size:0.9rem;">
+        {{ resto.cuisine }} · {{ resto.borough }}
+      </div>
+    </div>
+    <div style="display:flex; gap:0.75rem;">
+      <a href="/edit/{{ resto._id }}" class="btn btn-secondary">Éditer</a>
+      <form action="/delete/{{ resto._id }}" method="post" onsubmit="return confirm('Supprimer ce restaurant ?')">
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+      </form>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+
+    <!-- INFOS -->
+    <div class="card">
+      <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1.2rem;">Informations</div>
+
+      <div class="detail-grid" style="grid-template-columns:1fr;">
+        <div class="detail-field" style="margin-bottom:1rem;">
+          <div class="field-label">Nom</div>
+          <div class="field-value">{{ resto.name }}</div>
+        </div>
+        <div class="detail-field" style="margin-bottom:1rem;">
+          <div class="field-label">Borough</div>
+          <div class="field-value">{{ resto.borough }}</div>
+        </div>
+        <div class="detail-field" style="margin-bottom:1rem;">
+          <div class="field-label">Cuisine</div>
+          <div class="field-value">{{ resto.cuisine }}</div>
+        </div>
+        {% if resto.address %}
+        <div class="detail-field" style="margin-bottom:1rem;">
+          <div class="field-label">Adresse</div>
+          <div class="field-value">
+            {{ resto.address.get('building','') }} {{ resto.address.get('street','') }}<br>
+            <span style="color:var(--muted); font-size:0.875rem;">{{ resto.address.get('zipcode','') }}</span>
+          </div>
+        </div>
+        {% if resto.address.get('coord') %}
+        <div class="detail-field">
+          <div class="field-label">Coordonnées GPS</div>
+          <div class="field-value" style="font-size:0.875rem; color:var(--muted); font-family:monospace;">
+            {{ resto.address.coord[1] | round(5) }}, {{ resto.address.coord[0] | round(5) }}
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        <div class="detail-field">
+          <div class="field-label">ID Restaurant</div>
+          <div class="field-value" style="font-size:0.875rem; color:var(--muted); font-family:monospace;">{{ resto.restaurant_id }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRADES -->
+    <div class="card">
+      <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1.2rem;">
+        Historique des inspections
+        {% if resto.grades %}
+          <span style="margin-left:0.5rem; background:var(--border); padding:0.2rem 0.5rem; border-radius:4px;">{{ resto.grades | length }}</span>
+        {% endif %}
+      </div>
+
+      {% if resto.grades %}
+        <!-- Score moyen -->
+        {% set scores = resto.grades | selectattr('score') | list %}
+        {% if scores %}
+          {% set avg = (scores | sum(attribute='score')) / (scores | length) %}
+          <div style="margin-bottom:1.2rem; padding:1rem; background:var(--bg); border-radius:8px; display:flex; align-items:center; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.2rem;">Score moyen</div>
+              <div style="font-family:'DM Serif Display',serif; font-size:1.8rem; color:{% if avg < 10 %}#4caf7d{% elif avg < 15 %}#e8a045{% else %}#e05252{% endif %};">
+                {{ avg | round(1) }}
+              </div>
+            </div>
+            <div style="flex:1; height:4px; background:var(--border); border-radius:2px; overflow:hidden;">
+              <div style="height:100%; width:{{ [avg / 40 * 100, 100] | min }}%; background:{% if avg < 10 %}#4caf7d{% elif avg < 15 %}#e8a045{% else %}#e05252{% endif %}; border-radius:2px;"></div>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="grades-list" style="max-height:340px; overflow-y:auto;">
+          {% for g in resto.grades | reverse %}
+          <div class="grade-row">
+            <span class="date">
+              {% if g.date %}
+                {{ g.date.strftime('%d/%m/%Y') if g.date is not string else g.date[:10] }}
+              {% endif %}
+            </span>
+            {% set grade = g.get('grade','?') %}
+            <span class="badge {% if grade == 'A' %}badge-a{% elif grade == 'B' %}badge-b{% elif grade == 'C' %}badge-c{% else %}badge-default{% endif %}">
+              {{ grade }}
+            </span>
+            {% if g.score is not none %}
+              <span class="score">score : {{ g.score }}</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty" style="padding:2rem;">
+          <div style="color:var(--muted); font-size:0.875rem;">Aucune inspection enregistrée</div>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

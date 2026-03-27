@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Restaurants — NYC{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <div class="page-header">
+    <h1 class="page-title">Restaurants <span style="color:var(--muted); font-size:1rem; font-family:'DM Sans', sans-serif; font-weight:300;">{{ total }} résultats</span></h1>
+    <a href="/add" class="btn btn-primary">+ Ajouter</a>
+  </div>
+
+  <!-- FILTRES -->
+  <form method="get" class="filters">
+    <input
+      class="filter-input"
+      type="text"
+      name="search"
+      placeholder="Rechercher un restaurant..."
+      value="{{ search }}"
+    >
+    <select class="filter-select" name="borough" onchange="this.form.submit()">
+      <option value="">Tous les boroughs</option>
+      {% for b in boroughs %}
+        <option value="{{ b }}" {% if borough == b %}selected{% endif %}>{{ b }}</option>
+      {% endfor %}
+    </select>
+    <select class="filter-select" name="cuisine" onchange="this.form.submit()">
+      <option value="">Toutes les cuisines</option>
+      {% for c in cuisines %}
+        <option value="{{ c }}" {% if cuisine == c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Filtrer</button>
+    {% if search or borough or cuisine %}
+      <a href="/restaurants" class="btn btn-secondary">✕ Reset</a>
+    {% endif %}
+  </form>
+
+  <!-- TABLE -->
+  <div class="card">
+    {% if restaurants %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Borough</th>
+            <th>Cuisine</th>
+            <th>Adresse</th>
+            <th>Dernier grade</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in restaurants %}
+          <tr>
+            <td>
+              <a href="/restaurant/{{ r._id }}" style="color: var(--text); text-decoration:none; font-weight:500;">
+                {{ r.name }}
+              </a>
+            </td>
+            <td style="color: var(--muted);">{{ r.borough }}</td>
+            <td style="color: var(--muted);">{{ r.cuisine }}</td>
+            <td style="color: var(--muted); font-size:0.82rem;">
+              {% if r.address %}
+                {{ r.address.get('building','') }} {{ r.address.get('street','') }}
+              {% endif %}
+            </td>
+            <td>
+              {% if r.grades %}
+                {% set last = r.grades[-1] %}
+                {% set g = last.get('grade','?') %}
+                <span class="badge {% if g == 'A' %}badge-a{% elif g == 'B' %}badge-b{% elif g == 'C' %}badge-c{% else %}badge-default{% endif %}">
+                  {{ g }}
+                </span>
+              {% else %}
+                <span class="badge badge-default">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:0.4rem; justify-content:flex-end;">
+                <a href="/restaurant/{{ r._id }}" class="btn btn-secondary btn-sm">Voir</a>
+                <a href="/edit/{{ r._id }}" class="btn btn-secondary btn-sm">Éditer</a>
+                <form action="/delete/{{ r._id }}" method="post" style="display:inline" onsubmit="return confirm('Supprimer ce restaurant ?')">
+                  <button type="submit" class="btn btn-danger btn-sm">✕</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+      {% if page > 1 %}
+        <a href="?search={{ search }}&borough={{ borough }}&cuisine={{ cuisine }}&page={{ page - 1 }}">‹</a>
+      {% endif %}
+
+      {% for p in range(1, total_pages + 1) %}
+        {% if p == page %}
+          <span class="current">{{ p }}</span>
+        {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+          <a href="?search={{ search }}&borough={{ borough }}&cuisine={{ cuisine }}&page={{ p }}">{{ p }}</a>
+        {% elif p == page - 3 or p == page + 3 %}
+          <span style="border:none; background:none; color:var(--muted);">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if page < total_pages %}
+        <a href="?search={{ search }}&borough={{ borough }}&cuisine={{ cuisine }}&page={{ page + 1 }}">›</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty">
+      <div class="empty-icon">🔍</div>
+      <div>Aucun restaurant trouvé</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
